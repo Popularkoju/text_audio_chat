@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -23,31 +22,37 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController scrollController = ScrollController();
   final List<ChatMessageModel> _messages = [
     ChatMessageModel(
-        message: "Hi",
-        dateTime: DateTime.now(),
-        type: MessageType.own,
-        messageFormat: MessageFormat.text),
-    ChatMessageModel(
-        message: "hello",
+        message: "Hello",
         dateTime: DateTime.now(),
         type: MessageType.receiver,
         messageFormat: MessageFormat.text),
     ChatMessageModel(
-        message: "How are you?",
+        message: "hey",
         dateTime: DateTime.now(),
         type: MessageType.own,
         messageFormat: MessageFormat.text),
     ChatMessageModel(
-        message: "I am good. Whats about you?",
+        message: "Can you teach me to  create chat ui in flutter?",
         dateTime: DateTime.now(),
         type: MessageType.receiver,
+        messageFormat: MessageFormat.text),
+    ChatMessageModel(
+        message: "yeah, sure",
+        dateTime: DateTime.now(),
+        type: MessageType.own,
         messageFormat: MessageFormat.text),
     ChatMessageModel(
         message:
-            "This is  long text text. I want to test the over flow for the app. hope will work",
+            "I want to create adaptive chat box along with the voice chat. Can you help me out?",
         dateTime: DateTime.now(),
         type: MessageType.receiver,
-        messageFormat: MessageFormat.text)
+        messageFormat: MessageFormat.text),
+    // ChatMessageModel(
+    //     message:
+    //     "Lets get started?",
+    //     dateTime: DateTime.now(),
+    //     type: MessageType.own,
+    //     messageFormat: MessageFormat.text)
   ];
 
   ///audio waves
@@ -95,7 +100,7 @@ class _ChatScreenState extends State<ChatScreen> {
       _messages.add(ChatMessageModel(
           messageFormat: MessageFormat.audio,
           message: playBackAudioPath!,
-          type: MessageType.receiver,
+          type: MessageType.own,
           dateTime: DateTime.now()));
       playBackAudioPath = null;
     }
@@ -127,7 +132,6 @@ class _ChatScreenState extends State<ChatScreen> {
         if (path != null) {
           isRecordingCompleted = true;
           playBackAudioPath = path;
-          // _sendMessage();
           debugPrint(path);
           debugPrint("Recorded file size: ${File(path).lengthSync()}");
         }
@@ -158,14 +162,14 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.transparent,
+      color: Colors.white,
       child: SafeArea(
         child: Scaffold(
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: EdgeInsets.symmetric(
+                padding: const EdgeInsets.symmetric(
                   horizontal: 14.0,
                 ).copyWith(top: 16),
                 child: const Row(
@@ -305,9 +309,10 @@ class _ChatScreenState extends State<ChatScreen> {
                           )
                         : isRecordingCompleted
                             ? Container(
-                      width:double.infinity,
-
-                      child: const Text("Press send button to send audio"),)
+                                width: double.infinity,
+                                child: const Text(
+                                    "Press send button to send audio"),
+                              )
                             : Container(
                                 color: Colors.transparent,
                                 key: const Key("message"),
