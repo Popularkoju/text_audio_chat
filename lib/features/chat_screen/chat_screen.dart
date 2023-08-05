@@ -97,6 +97,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _sendMessage({String? message}) {
     if (playBackAudioPath != null) {
+      _messages.reversed;
       _messages.add(ChatMessageModel(
           messageFormat: MessageFormat.audio,
           message: playBackAudioPath!,
@@ -116,6 +117,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     scrollController.animateTo(
+      // 0,
       scrollController.position.maxScrollExtent,
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
@@ -275,7 +277,7 @@ class _ChatScreenState extends State<ChatScreen> {
               radius: 18,
               child: Icon(
                 isRecording
-                    ? Icons.pause
+                    ? Icons.stop
                     : isRecordingCompleted
                         ? Icons.check
                         : Icons.mic,
@@ -315,9 +317,9 @@ class _ChatScreenState extends State<ChatScreen> {
                             margin: const EdgeInsets.symmetric(horizontal: 12),
                           )
                         : isRecordingCompleted
-                            ? SizedBox(
+                            ? const SizedBox(
                                 width: double.infinity,
-                                child: const Text(
+                                child:  Text(
                                     "audio recorded"),
                               )
                             : Container(
