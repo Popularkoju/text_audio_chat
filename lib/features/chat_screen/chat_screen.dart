@@ -159,6 +159,13 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  void closeRecorder() {
+    setState(() {
+      isRecording = false;
+      isRecordingCompleted = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -244,13 +251,13 @@ class _ChatScreenState extends State<ChatScreen> {
           if (isRecording || isRecordingCompleted)
             GestureDetector(
               onTap: () {
-                cancelRecording();
+                isRecording ? cancelRecording() : closeRecorder();
               },
               child: CircleAvatar(
                 radius: 18,
-                backgroundColor: Colors.white,
-                child: Icon(
-                  color: Colors.grey.shade300,
+                backgroundColor: Colors.red.withOpacity(.2),
+                child:const Icon(
+                  color: Colors.white,
                   Icons.close,
                   size: 18,
                 ),
@@ -308,10 +315,10 @@ class _ChatScreenState extends State<ChatScreen> {
                             margin: const EdgeInsets.symmetric(horizontal: 12),
                           )
                         : isRecordingCompleted
-                            ? Container(
+                            ? SizedBox(
                                 width: double.infinity,
                                 child: const Text(
-                                    "Press send button to send audio"),
+                                    "audio recorded"),
                               )
                             : Container(
                                 color: Colors.transparent,
