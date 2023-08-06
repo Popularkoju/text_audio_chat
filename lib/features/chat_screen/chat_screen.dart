@@ -1,8 +1,7 @@
-import 'dart:io';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
+import 'package:text_audio_chat/features/chat_screen/providers/chat%20_state_manager.dart';
 import 'package:text_audio_chat/features/chat_screen/widgets/own_message_bubble.dart';
 import 'package:text_audio_chat/features/chat_screen/widgets/receiver_messages_bubble.dart';
 
@@ -17,155 +16,22 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  // final List<ChatMessageModel> _messages = [];
-  final TextEditingController _messageController = TextEditingController();
-  final ScrollController scrollController = ScrollController();
-  final List<ChatMessageModel> _messages = [
-    ChatMessageModel(
-        message: "Hello",
-        dateTime: DateTime.now(),
-        type: MessageType.receiver,
-        messageFormat: MessageFormat.text),
-    ChatMessageModel(
-        message: "hey",
-        dateTime: DateTime.now(),
-        type: MessageType.own,
-        messageFormat: MessageFormat.text),
-    ChatMessageModel(
-        message: "Can you teach me to  create chat ui in flutter?",
-        dateTime: DateTime.now(),
-        type: MessageType.receiver,
-        messageFormat: MessageFormat.text),
-    ChatMessageModel(
-        message: "yeah, sure",
-        dateTime: DateTime.now(),
-        type: MessageType.own,
-        messageFormat: MessageFormat.text),
-    ChatMessageModel(
-        message:
-            "I want to create adaptive chat box along with the voice chat. Can you help me out?",
-        dateTime: DateTime.now(),
-        type: MessageType.receiver,
-        messageFormat: MessageFormat.text),
-    // ChatMessageModel(
-    //     message:
-    //     "Lets get started?",
-    //     dateTime: DateTime.now(),
-    //     type: MessageType.own,
-    //     messageFormat: MessageFormat.text)
-  ];
-
   ///audio waves
-  late final RecorderController recorderController;
-
-  bool isRecording = false;
-  bool isRecordingCompleted = false;
 
   @override
   void initState() {
-    _askMicPermission();
-    _initialiseControllers();
-    scrollController.addListener(() {
-      setState(() {});
-    });
+    context.read<ChatStateManage>().askMicPermission();
+    context.read<ChatStateManage>().initialiseControllers();
+    // context.read<ChatStateManage>().scrollController.addListener(() {
+    // });
     super.initState();
   }
 
   @override
   void dispose() {
-    recorderController.dispose();
-    scrollController.dispose();
+    context.read<ChatStateManage>().recorderController.dispose();
+    context.read<ChatStateManage>().scrollController.dispose();
     super.dispose();
-  }
-
-  String? audioFilePath;
-  String? playBackAudioPath;
-
-  void _initialiseControllers() {
-    recorderController = RecorderController()
-      ..androidEncoder = AndroidEncoder.aac
-      ..androidOutputFormat = AndroidOutputFormat.mpeg4
-      ..iosEncoder = IosEncoder.kAudioFormatMPEG4AAC
-      ..updateFrequency = const Duration(milliseconds: 50)
-      ..sampleRate = 44100
-      ..bitRate = 48000;
-  }
-
-  _askMicPermission() async {
-    await Permission.microphone.request();
-  }
-
-  void _sendMessage({String? message}) {
-    if (playBackAudioPath != null) {
-      _messages.reversed;
-      _messages.add(ChatMessageModel(
-          messageFormat: MessageFormat.audio,
-          message: playBackAudioPath!,
-          type: MessageType.own,
-          dateTime: DateTime.now()));
-      playBackAudioPath = null;
-    }
-
-    if (message != null && message.isNotEmpty) {
-      _messages.add(ChatMessageModel(
-          messageFormat: MessageFormat.text,
-          message: message,
-          type: MessageType.own,
-          dateTime: DateTime.now()));
-      _messageController.clear();
-      playBackAudioPath = null;
-    }
-
-    scrollController.animateTo(
-      // 0,
-      scrollController.position.maxScrollExtent,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-    isRecordingCompleted = false;
-    setState(() {});
-  }
-
-  void _startOrStopRecording() async {
-    try {
-      if (isRecording) {
-        recorderController.reset();
-        final path = await recorderController.stop(false);
-        if (path != null) {
-          isRecordingCompleted = true;
-          playBackAudioPath = path;
-          debugPrint(path);
-          debugPrint("Recorded file size: ${File(path).lengthSync()}");
-        }
-      } else {
-        final Directory tempDir = await getTemporaryDirectory();
-        audioFilePath = tempDir.path;
-        await recorderController.record(
-            path:
-                "$audioFilePath/chat${DateTime.now().toString().replaceAll(" ", "_").replaceAll(":", "_").replaceAll(".", "_")}.aac");
-        // omit : whitespaces to file name otherwise error occurs when recording
-      }
-    } catch (e) {
-      debugPrint(e.toString());
-    } finally {
-      setState(() {
-        isRecording = !isRecording;
-      });
-    }
-  }
-
-  void cancelRecording() {
-    recorderController.stop();
-    setState(() {
-      isRecording = false;
-    });
-  }
-
-  void closeRecorder() {
-    setState(() {
-      isRecording = false;
-      isRecordingCompleted = false;
-    });
   }
 
   @override
@@ -223,10 +89,12 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: ListView.builder(
                     shrinkWrap: true,
                     // reverse: true,
-                    controller: scrollController,
-                    itemCount: _messages.length,
+                    controller:
+                        context.read<ChatStateManage>().scrollController,
+                    itemCount: context.read<ChatStateManage>().messages.length,
                     itemBuilder: (BuildContext context, int index) {
-                      final message = _messages[index];
+                      final message =
+                          context.read<ChatStateManage>().messages[index];
                       return Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: message.type == MessageType.own
@@ -246,19 +114,23 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   _buildTextField() {
+    ChatStateManage watchChat = context.watch<ChatStateManage>();
+    ChatStateManage readChat = context.watch<ChatStateManage>();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
       child: Row(
         children: [
-          if (isRecording || isRecordingCompleted)
+          if (watchChat.isRecording || watchChat.isRecordingCompleted)
             GestureDetector(
               onTap: () {
-                isRecording ? cancelRecording() : closeRecorder();
+                watchChat.isRecording
+                    ? readChat.cancelRecording()
+                    : readChat.closeRecorder();
               },
               child: CircleAvatar(
                 radius: 18,
                 backgroundColor: Colors.red.withOpacity(.2),
-                child:const Icon(
+                child: const Icon(
                   color: Colors.white,
                   Icons.close,
                   size: 18,
@@ -269,16 +141,16 @@ class _ChatScreenState extends State<ChatScreen> {
             width: 16,
           ),
           GestureDetector(
-            onTap: _startOrStopRecording,
+            onTap: readChat.startOrStopRecording,
             child: CircleAvatar(
-              backgroundColor: isRecording
+              backgroundColor: watchChat.isRecording
                   ? AppColor.primaryColor.withOpacity(.2)
                   : AppColor.chatMicContainerColor,
               radius: 18,
               child: Icon(
-                isRecording
+                watchChat.isRecording
                     ? Icons.stop
-                    : isRecordingCompleted
+                    : watchChat.isRecordingCompleted
                         ? Icons.check
                         : Icons.mic,
                 color: Colors.grey,
@@ -296,12 +168,12 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
-                    child: isRecording
+                    child: watchChat.isRecording
                         ? AudioWaveforms(
                             key: const Key("audio"),
                             enableGesture: true,
                             size: const Size(double.infinity, 50),
-                            recorderController: recorderController,
+                            recorderController: readChat.recorderController,
                             waveStyle: WaveStyle(
                               waveColor: AppColor.primaryColor,
                               extendWaveform: true,
@@ -316,11 +188,10 @@ class _ChatScreenState extends State<ChatScreen> {
                             padding: const EdgeInsets.only(left: 4),
                             margin: const EdgeInsets.symmetric(horizontal: 12),
                           )
-                        : isRecordingCompleted
+                        : watchChat.isRecordingCompleted
                             ? const SizedBox(
                                 width: double.infinity,
-                                child:  Text(
-                                    "audio recorded"),
+                                child: Text("audio recorded"),
                               )
                             : Container(
                                 color: Colors.transparent,
@@ -331,7 +202,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                       fontSize: 12, color: Colors.black),
                                   maxLines: 3,
                                   minLines: 1,
-                                  controller: _messageController,
+                                  controller: readChat.messageController,
                                   decoration: InputDecoration(
                                       contentPadding:
                                           const EdgeInsets.symmetric(
@@ -363,7 +234,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     right: -6,
                     child: GestureDetector(
                       onTap: () {
-                        _sendMessage(message: _messageController.text);
+                        readChat.sendMessage();
                       },
                       child: Container(
                         height: 32,
